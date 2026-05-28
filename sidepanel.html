@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sophos Central Coach</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <header>
+    <img src="icons/icon48.png" alt="" class="logo" />
+    <div class="header-text">
+      <span class="title">Central Coach</span>
+      <span class="subtitle" id="product-label">Waiting for page...</span>
+    </div>
+    <select id="audience-select">
+      <option value="IT Manager">IT Manager</option>
+      <option value="Security Engineer">Security Engineer</option>
+      <option value="CTO / CISO">CTO / CISO</option>
+      <option value="MSP / Partner SE">MSP / Partner SE</option>
+    </select>
+  </header>
+
+  <nav class="tabs" id="tab-bar">
+    <button class="tab active" data-tab="talk">Talk Track</button>
+    <button class="tab" data-tab="discovery">Discovery</button>
+    <button class="tab" data-tab="objections">Objections</button>
+    <button class="tab" data-tab="compete">Compete</button>
+  </nav>
+
+  <main id="panel-content">
+    <div class="empty-state">
+      <p>Navigate to a product page in Sophos Central to load coaching content.</p>
+    </div>
+  </main>
+
+  <script src="data/products.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

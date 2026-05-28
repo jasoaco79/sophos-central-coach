@@ -1,0 +1,9 @@
+{
+  "name": "sophos-central-coach",
+  "version": "0.1.0",
+  "description": "Chrome extension — contextual field guide sidebar for Sophos Central",
+  "private": true,
+  "scripts": {
+    "extract": "node scripts/extract-products.js"
+  }
+}
