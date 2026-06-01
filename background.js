@@ -1,13 +1,8 @@
-// Open side panel when the action button is clicked on a Sophos Central tab
-chrome.sidePanel
-  .setPanelBehavior({ openPanelOnActionClick: true })
-  .catch(console.error);
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('Watchman installed');
+});
 
-// Forward page-context messages from content script to side panel
-chrome.runtime.onMessage.addListener((message, sender) => {
-  if (message.type === "PAGE_CONTEXT") {
-    chrome.runtime.sendMessage({ type: "PAGE_CONTEXT", payload: message.payload }).catch(() => {
-      // Side panel not open yet — ignore
-    });
-  }
+chrome.action.onClicked.addListener(async (tab) => {
+  if (!tab?.windowId) return;
+  await chrome.sidePanel.open({ windowId: tab.windowId });
 });

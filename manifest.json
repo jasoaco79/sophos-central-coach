@@ -7,13 +7,12 @@
   "permissions": [
     "sidePanel",
     "activeTab",
+    "scripting",
     "tabs",
     "storage"
   ],
 
-  "host_permissions": [
-    "*://*.cloud.sophos.com/*"
-  ],
+  "host_permissions": ["<all_urls>"],
 
   "background": {
     "service_worker": "background.js"
@@ -21,7 +20,7 @@
 
   "content_scripts": [
     {
-      "matches": ["*://*.cloud.sophos.com/*"],
+      "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
@@ -34,17 +33,17 @@
   "action": {
     "default_title": "Sophos Central Coach",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/watchman-icon-16.png",
+      "32": "icons/watchman-icon-32.png",
+      "48": "icons/watchman-icon-48.png",
+      "128": "icons/watchman-icon-128.png"
     }
   },
 
   "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "icons/watchman-icon-16.png",
+    "32": "icons/watchman-icon-32.png",
+    "48": "icons/watchman-icon-48.png",
+    "128": "icons/watchman-icon-128.png"
   }
 }
