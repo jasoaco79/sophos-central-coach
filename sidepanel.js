@@ -8,41 +8,89 @@ let lastAnalysisPayload = null;
 let visibleMode = 'deciphered';
 
 // ── Sophos Central detection (inlined — no ES module imports in sidepanel) ──
+// Central routes follow /manage/{segment}/{view}. Confirmed real slug: "endpoint"
+// (from /manage/endpoint/policies-list). The map keys are the {segment} slugs;
+// values are field-guide product keys. Slugs not yet confirmed against live
+// Central are best-guesses — the empty state names any unmapped slug so it can
+// be added here.
+const SEGMENT_MAP = {
+  endpoint: 'endpoint',          // confirmed
+  server: 'server',
+  mdr: 'mdr',
+  ztna: 'ztna',
+  email: 'email',
+  itdr: 'itdr',
+  identity: 'itdr',
+  firewall: 'firewall',
+  xdr: 'taegis',
+  taegis: 'taegis',
+  'security-operations': 'taegis',
+  ndr: 'ndr',
+  cloud: 'cloud',
+  'cloud-security': 'cloud',
+  cnapp: 'cloud',
+  'managed-risk': 'risk',
+  risk: 'risk',
+  advisory: 'advisory',
+  encryption: 'encryption',
+  'device-encryption': 'encryption',
+  mobile: 'mobile',
+  wireless: 'wireless',
+  switches: 'switches',
+  dns: 'dns',
+  browser: 'browser',
+  'protected-browser': 'browser',
+  phish: 'phish',
+  'phish-threat': 'phish',
+};
+
+// Fallback substring patterns (used only if segment extraction misses)
 const PRODUCT_ROUTE_MAP = [
-  { pattern: /\/endpoint-protection|\/endpoint/i, product: 'endpoint' },
-  { pattern: /\/mdr/i,                            product: 'mdr' },
-  { pattern: /\/ztna/i,                           product: 'ztna' },
-  { pattern: /\/email/i,                          product: 'email' },
-  { pattern: /\/itdr|\/identity/i,                product: 'itdr' },
-  { pattern: /\/firewall/i,                       product: 'firewall' },
+  { pattern: /\/endpoint/i,    product: 'endpoint' },
+  { pattern: /\/mdr/i,         product: 'mdr' },
+  { pattern: /\/ztna/i,        product: 'ztna' },
+  { pattern: /\/email/i,       product: 'email' },
+  { pattern: /\/itdr|\/identity/i, product: 'itdr' },
+  { pattern: /\/firewall/i,    product: 'firewall' },
   { pattern: /\/security-operations|\/xdr|\/taegis/i, product: 'taegis' },
-  { pattern: /\/ndr/i,                            product: 'ndr' },
+  { pattern: /\/ndr/i,         product: 'ndr' },
   { pattern: /\/cloud-security|\/cnapp|\/cloud-native/i, product: 'cloud' },
-  { pattern: /\/managed-risk/i,                   product: 'risk' },
-  { pattern: /\/advisory/i,                       product: 'advisory' },
-  { pattern: /\/server/i,                         product: 'server' },
+  { pattern: /\/managed-risk/i, product: 'risk' },
+  { pattern: /\/advisory/i,    product: 'advisory' },
+  { pattern: /\/server/i,      product: 'server' },
   { pattern: /\/encryption|\/device-encryption/i, product: 'encryption' },
-  { pattern: /\/mobile/i,                         product: 'mobile' },
-  { pattern: /\/wireless/i,                       product: 'wireless' },
-  { pattern: /\/switches/i,                       product: 'switches' },
-  { pattern: /\/dns/i,                            product: 'dns' },
-  { pattern: /\/protected-browser|\/browser/i,    product: 'browser' },
-  { pattern: /\/phish/i,                          product: 'phish' },
+  { pattern: /\/mobile/i,      product: 'mobile' },
+  { pattern: /\/wireless/i,    product: 'wireless' },
+  { pattern: /\/switches/i,    product: 'switches' },
+  { pattern: /\/dns/i,         product: 'dns' },
+  { pattern: /\/protected-browser|\/browser/i, product: 'browser' },
+  { pattern: /\/phish/i,       product: 'phish' },
 ];
 
-function detectProduct(snapshot) {
+// Returns { isCentral, product, segment } — segment is the raw /manage slug,
+// surfaced even when unmapped so the empty state can name it.
+function detectCentral(snapshot) {
   const url = snapshot?.url || '';
   const route = snapshot?.route || '';
   const title = (snapshot?.title || '').toLowerCase();
 
   const isCentral = url.includes('central.sophos.com') || title.includes('sophos central');
-  if (!isCentral) return null;
+  if (!isCentral) return { isCentral: false, product: null, segment: null };
 
-  const corpus = route + ' ' + (snapshot?.headings || []).join(' ').toLowerCase();
-  for (const entry of PRODUCT_ROUTE_MAP) {
-    if (entry.pattern.test(corpus)) return entry.product;
+  // Primary: pull the product slug from /manage/{segment}
+  const match = route.match(/\/manage\/([^/?#]+)/i);
+  const segment = match ? match[1].toLowerCase() : null;
+  let product = segment ? (SEGMENT_MAP[segment] || null) : null;
+
+  // Fallback: loose substring match across route + headings
+  if (!product) {
+    const corpus = route.toLowerCase() + ' ' + (snapshot?.headings || []).join(' ').toLowerCase();
+    for (const entry of PRODUCT_ROUTE_MAP) {
+      if (entry.pattern.test(corpus)) { product = entry.product; break; }
+    }
   }
-  return null;
+
+  return { isCentral: true, product, segment };
 }
 
 // ── Snapshot via scripting injection ──
@@ -132,17 +180,25 @@ document.getElementById('audience-select').addEventListener('change', e => {
 async function autoDetect() {
   const snapshot = await getPageSnapshot();
   if (!snapshot) return;
-  const product = detectProduct(snapshot);
+  const { isCentral, product, segment } = detectCentral(snapshot);
+
   if (product && product !== currentProduct) {
     currentProduct = product;
     currentScreenIdx = 0;
     renderCoachHeader();
     renderCoachContent();
+  } else if (isCentral && !product) {
+    // On Central but this section isn't mapped — name it so it can be added
+    currentProduct = null;
+    showUnmappedCentral(segment);
   }
+
   document.getElementById('top-subtitle').textContent =
     currentProduct && window.PRODUCTS?.[currentProduct]
       ? window.PRODUCTS[currentProduct].name
-      : 'Navigate to a product page to begin';
+      : isCentral && segment
+        ? `Central · ${segment} (unmapped)`
+        : 'Navigate to a product page to begin';
 }
 
 chrome.tabs.onActivated.addListener(autoDetect);
@@ -191,6 +247,21 @@ function renderCoachHeader() {
     `<option value="${i}">${s.name}</option>`
   ).join('');
   sel.value = currentScreenIdx;
+}
+
+// Self-documenting empty state: on Central but the section isn't mapped yet.
+// Names the raw slug so it can be added to SEGMENT_MAP.
+function showUnmappedCentral(segment) {
+  document.getElementById('coach-header').style.display = 'none';
+  document.getElementById('coach-controls').style.display = 'none';
+  document.getElementById('coach-tabs').style.display = 'none';
+  document.getElementById('coach-content').innerHTML =
+    `<div class="coach-empty">` +
+    `<strong>Sophos Central detected</strong>` +
+    (segment
+      ? `This section — <code style="color:#9be0f8">${segment}</code> — isn't mapped to the field guide yet. Navigate to a product area, or send this slug to add it.`
+      : `No product section found in the URL. Open a product area to load coaching content.`) +
+    `</div>`;
 }
 
 // ── Coach content ──
@@ -347,16 +418,15 @@ document.getElementById('analyzeBtn').addEventListener('click', async () => {
   if (!snapshot) { setStatus('Could not reach active tab.'); return; }
 
   lastAnalysisPayload = snapshot;
-  const product = detectProduct(snapshot);
+  const { isCentral, product, segment } = detectCentral(snapshot);
 
-  const isCentral = snapshot.url.includes('central.sophos.com') || snapshot.title.toLowerCase().includes('sophos');
   const pageType = snapshot.route.includes('/alerts') ? 'alerts-list'
     : snapshot.route.includes('/cases') ? 'cases-list'
     : snapshot.route.includes('/endpoints') ? 'endpoint-view'
     : 'dashboard';
 
   document.getElementById('summaryHeadline').textContent = isCentral
-    ? `Sophos Central — ${pageType}${product ? ` (${product})` : ''}`
+    ? `Sophos Central — ${pageType}${product ? ` (${product})` : segment ? ` · ${segment} (unmapped)` : ''}`
     : `${snapshot.title || 'Unknown page'}`;
 
   document.getElementById('summaryCopy').textContent = isCentral
