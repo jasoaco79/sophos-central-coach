@@ -17,7 +17,7 @@ const PRODUCT_ROUTE_MAP = [
   { pattern: /\/firewall/i,                       product: 'firewall' },
   { pattern: /\/security-operations|\/xdr|\/taegis/i, product: 'taegis' },
   { pattern: /\/ndr/i,                            product: 'ndr' },
-  { pattern: /\/cloud-security/i,                 product: 'risk' },
+  { pattern: /\/cloud-security|\/cnapp|\/cloud-native/i, product: 'cloud' },
   { pattern: /\/managed-risk/i,                   product: 'risk' },
   { pattern: /\/advisory/i,                       product: 'advisory' },
   { pattern: /\/server/i,                         product: 'server' },
