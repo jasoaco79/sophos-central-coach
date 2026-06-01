@@ -53,12 +53,18 @@
       });
       await load("../data/products.js");
       await load("../sidepanel.js");
-      // ?tab= clicks a coach tab after load (talk|discovery|objections|compete)
-      const tab = new URLSearchParams(location.search).get("tab");
-      if (tab) {
-        await new Promise(r => setTimeout(r, 600));
-        document.querySelector(`.coach-tab[data-tab="${tab}"]`)?.click();
+      const qp = new URLSearchParams(location.search);
+      await new Promise(r => setTimeout(r, 600));
+      // ?pick= selects a product in the manual picker (simulates the SE overriding detection)
+      const pick = qp.get("pick");
+      if (pick) {
+        const sel = document.getElementById("product-select");
+        sel.value = pick;
+        sel.dispatchEvent(new Event("change"));
       }
+      // ?tab= clicks a coach tab after load (talk|discovery|objections|compete)
+      const tab = qp.get("tab");
+      if (tab) document.querySelector(`.coach-tab[data-tab="${tab}"]`)?.click();
     })();
   </script>
 </body>

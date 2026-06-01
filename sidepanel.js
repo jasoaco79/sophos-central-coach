@@ -6,6 +6,7 @@ let currentCoachTab = 'talk';
 let currentAudience = 'IT Manager';
 let lastAnalysisPayload = null;
 let visibleMode = 'deciphered';
+let pinnedProduct = null; // set when the user manually picks a product; pauses auto-detect
 
 // ── Sophos Central detection (inlined — no ES module imports in sidepanel) ──
 // Central routes follow /manage/{segment}/{view}. Confirmed real slug: "endpoint"
@@ -164,6 +165,43 @@ document.querySelectorAll('.coach-tab').forEach(btn => {
   });
 });
 
+// ── Product picker (manual override) ──
+const productSelect = document.getElementById('product-select');
+
+function populateProductPicker() {
+  const products = window.PRODUCTS || {};
+  // Sort alphabetically by display name for easy scanning
+  const entries = Object.keys(products)
+    .map(key => ({ key, name: products[key].name || key }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  for (const { key, name } of entries) {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = name;
+    productSelect.appendChild(opt);
+  }
+}
+populateProductPicker();
+
+productSelect.addEventListener('change', () => {
+  const key = productSelect.value;
+  if (!key) {
+    // Back to auto-detect — resume following the page
+    pinnedProduct = null;
+    currentProduct = null;
+    autoDetect();
+    return;
+  }
+  // Pin to the chosen product
+  pinnedProduct = key;
+  currentProduct = key;
+  currentScreenIdx = 0;
+  renderCoachHeader();
+  renderCoachContent();
+  document.getElementById('top-subtitle').textContent =
+    `${window.PRODUCTS?.[key]?.name || key} · pinned`;
+});
+
 // ── Screen selector ──
 document.getElementById('screen-select').addEventListener('change', e => {
   currentScreenIdx = parseInt(e.target.value, 10);
@@ -178,6 +216,9 @@ document.getElementById('audience-select').addEventListener('change', e => {
 
 // ── Auto-detect on load and on tab activation ──
 async function autoDetect() {
+  // Manual pin overrides page detection — don't follow the page while pinned
+  if (pinnedProduct) return;
+
   const snapshot = await getPageSnapshot();
   if (!snapshot) return;
   const { isCentral, product, segment } = detectCentral(snapshot);

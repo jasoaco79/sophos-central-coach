@@ -110,6 +110,35 @@
       line-height: 1.45;
     }
 
+    .coach-picker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: rgba(0,168,224,0.04);
+    }
+    .picker-label {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .coach-picker select {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+
     .coach-controls {
       display: flex;
       gap: 6px;
@@ -345,6 +374,14 @@
 
     <!-- ── COACH MODE ── -->
     <div id="coach-panel">
+
+      <!-- Product picker (always visible — manual override of auto-detection) -->
+      <div class="coach-picker">
+        <span class="picker-label">Product</span>
+        <select id="product-select" title="Pick a product or auto-detect from the page">
+          <option value="">🔄 Auto-detect</option>
+        </select>
+      </div>
 
       <!-- Product header (hidden until a product is detected) -->
       <div id="coach-header" class="coach-header" style="display:none">
